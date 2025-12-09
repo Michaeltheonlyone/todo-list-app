@@ -9,7 +9,8 @@ class ApiService {
   // Pour Android emulator: 10.0.2.2
   // Pour iOS simulator: localhost
   // Pour vrai device: IP de ton ordinateur (ex: 192.168.1.100)
-  static const String baseUrl = 'http://10.0.2.2:8000/endpoints'; // À ajuster selon ton setup
+  static const String baseUrl =
+      'http://localhost/backend/endpoints'; // À ajuster selon ton setup
 
   // 1. Get all tasks
   static Future<List<Task>> getTasks() async {

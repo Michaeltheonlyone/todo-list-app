@@ -66,15 +66,19 @@ class Task {
   // Création depuis Map
   factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
-      id: map['id'],
+      id: map['id'].toString(),
       title: map['title'],
       description: map['description'],
       dueDate: map['dueDate'] != null ? DateTime.parse(map['dueDate']) : null,
       priority: TaskPriority.values[map['priority'] ?? 1],
       status: TaskStatus.values[map['status'] ?? 0],
       createdAt: DateTime.parse(map['createdAt']),
-      completedAt: map['completedAt'] != null ? DateTime.parse(map['completedAt']) : null,
-      tags: map['tags']?.split(','),
+      completedAt: map['completedAt'] != null
+          ? DateTime.parse(map['completedAt'])
+          : null,
+      tags: map['tags'] is List
+          ? List<String>.from(map['tags'] ?? [])
+          : (map['tags'] is String ? (map['tags'] as String).split(',') : []),
     );
   }
 

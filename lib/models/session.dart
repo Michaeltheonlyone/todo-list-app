@@ -73,8 +73,8 @@ class WorkSession {
   // Création depuis Map
   factory WorkSession.fromMap(Map<String, dynamic> map) {
     return WorkSession(
-      id: map['id'],
-      taskId: map['taskId'],
+      id: map['id'].toString(),
+      taskId: map['taskId'].toString(),
       startTime: DateTime.parse(map['startTime']),
       endTime: map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
       durationMinutes: map['durationMinutes'] ?? 25,
