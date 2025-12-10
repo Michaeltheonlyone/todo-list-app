@@ -1,16 +1,41 @@
-# todo_list_app
+# 📱 Todo List - Gestionnaire de tâches
 
-A new Flutter project.
+<div align="center">
+  <img src="assets/images/logo.png" width="150">
+  <h3>Organisez vos tâches, boostez votre productivité</h3>
+</div>
 
-## Getting Started
+## 🎯 À propos
+Application mobile développée avec **Flutter** pour la gestion de tâches avec système Pomodoro intégré.
 
-This project is a starting point for a Flutter application.
+**Projet scolaire** - Développement Mobile
 
-A few resources to get you started if this is your first Flutter project:
+## ✨ Fonctionnalités
+| Fonctionnalité | Statut | Responsable |
+|----------------|--------|-------------|
+| ✅ Splash Screen & Icône | Terminé | [Votre nom] |
+| ✅ Interface principale | Terminé | [Camarade] |
+| 🔄 Timer Pomodoro | En cours | [Camarade] |
+| 🔄 Statistiques | En cours | [Camarade] |
+| 🔄 Base de données | En cours | [Camarade] |
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 📸 Aperçu
+<p align="center">
+  <img src="screenshots/splash.png" width="200" alt="Splash Screen">
+  <img src="screenshots/main.png" width="200" alt="Écran principal">
+</p>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Installation
+```bash
+# 1. Cloner
+git clone https://github.com/[username]/todo-list-app.git
+
+# 2. Installer dépendances
+cd todo-list-app
+flutter pub get
+
+# 3. Générer splash screen
+dart run flutter_native_splash:create
+
+# 4. Lancer
+flutter run
