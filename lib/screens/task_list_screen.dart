@@ -173,14 +173,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       ),
                       const SizedBox(width: 8),
                       _FilterChip(
-                        label: 'En cours',
-                        isSelected: filterStatus == TaskStatus.inProgress,
-                        onTap: () => setState(
-                          () => filterStatus = TaskStatus.inProgress,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _FilterChip(
                         label: 'Terminées',
                         isSelected: filterStatus == TaskStatus.completed,
                         onTap: () =>

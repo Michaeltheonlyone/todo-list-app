@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
+require_once("../config/db.php");
 
 header("Content-Type: application/json");
 $method = $_SERVER["REQUEST_METHOD"];
@@ -22,14 +23,14 @@ if ($method == "GET") {
     }
     
     $stmt = $pdo->prepare("SELECT 
-        id,
-        task_id as taskId,
-        start_time as startTime,
-        end_time as endTime,
-        COALESCE(duration_minutes, 25) as durationMinutes,
-        COALESCE(type, 0) as type,
-        COALESCE(status, 0) as status,
-        COALESCE(notes, '') as notes
+    id,
+    task_id as taskId,
+    start_time as startTime,
+    end_time as endTime,
+    COALESCE(duration_minutes, 25) as durationMinutes,
+    COALESCE(type, 0) as type,
+    COALESCE(status, 0) as status,
+    COALESCE(notes, '') as notes
     FROM sessions WHERE task_id=?");
     
     $stmt->execute([$taskId]);
