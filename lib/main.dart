@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/task_list_screen.dart';
+import 'screens/logo_screen.dart'; // AJOUTÉ
+import 'screens/splash_screen.dart'; // AJOUTÉ
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -47,13 +49,7 @@ class TodoApp extends StatelessWidget {
           backgroundColor: Colors.transparent,
           iconTheme: IconThemeData(color: Colors.black87),
         ),
-        cardTheme: CardThemeData(
-          // Changed from CardTheme to CardThemeData
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+    
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 0,
@@ -81,7 +77,13 @@ class TodoApp extends StatelessWidget {
           elevation: 4,
         ),
       ),
-      home: const TaskListScreen(),
+      // AJOUTÉ: Navigation avec 2 écrans de démarrage
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LogoScreen(), // Écran 1: Logo seul
+        '/splash': (context) => const SplashScreen(), // Écran 2: Logo + texte
+        '/home': (context) => const TaskListScreen(),
+      },
     );
   }
 }
