@@ -13,20 +13,23 @@ require_once("../config/db.php");
 header("Content-Type: application/json");
 $method = $_SERVER["REQUEST_METHOD"];
 
-// GET all tasks
+// GET all tasks (Filtered by user_id)
 if ($method == "GET") {
-    $stmt = $pdo->query("SELECT 
+    $user_id = $_GET['user_id'] ?? 0; // Require user_id
+
+    $stmt = $pdo->prepare("SELECT 
         id, 
         title, 
         COALESCE(description, '') as description,
-        due_date as dueDate,
+        due_date as \"dueDate\",
         COALESCE(priority, 1) as priority,
         COALESCE(status, 0) as status,
-        created_at as createdAt,
-        completed_at as completedAt,
+        created_at as \"createdAt\",
+        completed_at as \"completedAt\",
         COALESCE(tags, '') as tags
-    FROM tasks");
+    FROM tasks WHERE user_id = ?");
     
+    $stmt->execute([$user_id]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Format for Dart
@@ -46,10 +49,11 @@ if ($method == "GET") {
 // POST create task
 if ($method == "POST") {
     $input = json_decode(file_get_contents("php://input"), true);
-    
+    $user_id = $input['user_id'] ?? 0; // Default to 0 or error
+
     $stmt = $pdo->prepare("INSERT INTO tasks 
-        (title, description, due_date, priority, status, tags) 
-        VALUES (?, ?, ?, ?, ?, ?)");
+        (title, description, due_date, priority, status, tags, user_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)");
     
     $stmt->execute([
         $input['title'] ?? '',
@@ -57,7 +61,8 @@ if ($method == "POST") {
         !empty($input['dueDate']) ? date('Y-m-d H:i:s', strtotime($input['dueDate'])) : null,
         $input['priority'] ?? 1,
         $input['status'] ?? 0,
-        !empty($input['tags']) ? implode(',', $input['tags']) : ''
+        !empty($input['tags']) ? implode(',', $input['tags']) : '',
+        $user_id
     ]);
     
     $id = $pdo->lastInsertId();
@@ -103,6 +108,23 @@ if ($method == "PUT") {
         !empty($input['tags']) ? implode(',', $input['tags']) : '',
         $input['id']
     ]);
+
+    // Check if status changed to 2 (Done) to send notification
+    if (($input['status'] ?? 0) == 2) {
+         // Get user_id for this task
+         $uStmt = $pdo->prepare("SELECT user_id, title FROM tasks WHERE id = ?");
+         $uStmt->execute([$input['id']]);
+         $taskData = $uStmt->fetch(PDO::FETCH_ASSOC);
+
+         if ($taskData) {
+             $notifStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message) VALUES (?, ?, ?)");
+             $notifStmt->execute([
+                 $taskData['user_id'],
+                 "Tâche terminée 👏",
+                 "Bravo ! Vous avez terminé la tâche : " . $taskData['title']
+             ]);
+         }
+    }
     
     echo json_encode(["message" => "Task updated", "id" => $input['id']]);
     exit;

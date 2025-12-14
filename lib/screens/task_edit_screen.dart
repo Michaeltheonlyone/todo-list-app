@@ -1,6 +1,7 @@
 // lib/screens/task_edit_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/task.dart';
 
 class TaskEditScreen extends StatefulWidget {
@@ -18,17 +19,21 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
   late TextEditingController _descriptionController;
   late TaskPriority _selectedPriority;
   DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
   List<String> _tags = [];
+
+  bool get _isEditing => widget.task != null;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(
-      text: widget.task?.description ?? '',
-    );
+    _descriptionController = TextEditingController(text: widget.task?.description ?? '');
     _selectedPriority = widget.task?.priority ?? TaskPriority.medium;
     _selectedDate = widget.task?.dueDate;
+    if (_selectedDate != null) {
+      _selectedTime = TimeOfDay.fromDateTime(_selectedDate!);
+    }
     _tags = widget.task?.tags ?? [];
   }
 
@@ -41,13 +46,24 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
 
   void _saveTask() {
     if (_formKey.currentState!.validate()) {
+      DateTime? finalDateTime = _selectedDate;
+      
+      // Merge Date and Time if both exist
+      if (_selectedDate != null && _selectedTime != null) {
+        finalDateTime = DateTime(
+          _selectedDate!.year,
+          _selectedDate!.month,
+          _selectedDate!.day,
+          _selectedTime!.hour,
+          _selectedTime!.minute,
+        );
+      }
+
       final task = Task(
-        id: widget.task?.id, // Change: remove default ID
+        id: widget.task?.id,
         title: _titleController.text,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        dueDate: _selectedDate,
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        dueDate: finalDateTime,
         priority: _selectedPriority,
         status: widget.task?.status ?? TaskStatus.pending,
         tags: _tags.isEmpty ? null : _tags,
@@ -58,7 +74,8 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
     }
   }
 
-  Future<void> _selectDate() async {
+  Future<void> _selectDateTime() async {
+    // 1. Pick Date
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -67,7 +84,7 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFF4F46E5)),
+            colorScheme: ColorScheme.light(primary: Theme.of(context).primaryColor),
           ),
           child: child!,
         );
@@ -75,340 +92,216 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
     );
 
     if (date != null) {
-      setState(() => _selectedDate = date);
+      if (!mounted) return;
+      // 2. Pick Time
+      final time = await showTimePicker(
+        context: context,
+        initialTime: _selectedTime ?? TimeOfDay.now(),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(primary: Theme.of(context).primaryColor),
+            ),
+            child: child!,
+          );
+        },
+      );
+
+      setState(() {
+        _selectedDate = date;
+        _selectedTime = time;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.task != null;
-
     return Scaffold(
-      body: Column(
-        children: [
-          // Header
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF9333EA)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          _isEditing ? 'Modifier la tâche' : 'Nouvelle tâche',
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          TextButton(
+            onPressed: _saveTask,
+            child: const Text(
+              'Enregistrer',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF007AFF),
               ),
             ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
+          )
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            // Title Input
+            _buildSectionTitle('TITRE'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _titleController,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              decoration: _buildInputDecoration('Que devez-vous faire ?', Icons.title),
+              validator: (value) => value == null || value.isEmpty ? 'Le titre est requis' : null,
+            ),
+            const SizedBox(height: 24),
+
+            // Description Input
+            _buildSectionTitle('DESCRIPTION'),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _descriptionController,
+              maxLines: 4,
+              style: const TextStyle(fontSize: 16),
+              decoration: _buildInputDecoration('Ajouter des détails...', Icons.notes),
+            ),
+            const SizedBox(height: 24),
+
+            // Date & Time Picker
+            _buildSectionTitle('DATE ET HEURE LIMITE'),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _selectDateTime,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F2F7),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isEditing ? 'Modifier la tâche' : 'Nouvelle tâche',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                    const Icon(Icons.calendar_month_rounded, color: Color(0xFF007AFF)),
+                    const SizedBox(width: 12),
+                    Text(
+                      _selectedDate == null 
+                        ? 'Définir une date limite' 
+                        : _formatDateAndTime(_selectedDate!, _selectedTime),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _selectedDate == null ? Colors.grey[600] : Colors.black,
+                        fontWeight: _selectedDate == null ? FontWeight.normal : FontWeight.w600,
                       ),
                     ),
+                    const Spacer(),
+                    if (_selectedDate != null)
+                      GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedDate = null;
+                          _selectedTime = null;
+                        }),
+                        child: Icon(Icons.cancel, color: Colors.grey[400]),
+                      )
+                    else 
+                      const Icon(Icons.chevron_right, color: Colors.grey),
                   ],
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 24),
 
-          // Formulaire
-          Expanded(
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Titre
-                    const Text(
-                      'Titre *',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        hintText: 'Ex: Finaliser le rapport',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Le titre est obligatoire';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Description
-                    const Text(
-                      'Description',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Ajouter des détails...',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF4F46E5),
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Date limite
-                    const Text(
-                      'Date limite',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: _selectDate,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today, color: Colors.grey[600]),
-                            const SizedBox(width: 12),
-                            Text(
-                              _selectedDate != null
-                                  ? _formatDate(_selectedDate!)
-                                  : 'Sélectionner une date',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: _selectedDate != null
-                                    ? Colors.black87
-                                    : Colors.grey[500],
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_selectedDate != null)
-                              IconButton(
-                                icon: const Icon(Icons.clear, size: 20),
-                                onPressed: () =>
-                                    setState(() => _selectedDate = null),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Priorité
-                    const Text(
-                      'Priorité',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 2.5,
-                      children: TaskPriority.values.map((priority) {
-                        final isSelected = _selectedPriority == priority;
-                        final colors = _getPriorityColors(priority);
-
-                        return InkWell(
-                          onTap: () =>
-                              setState(() => _selectedPriority = priority),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? colors['bg']
-                                  : Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? colors['border']!
-                                    : Colors.transparent,
-                                width: 2,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              priority.label,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? colors['text']
-                                    : Colors.grey[700],
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
+            // Priority Selection
+            _buildSectionTitle('PRIORITÉ'),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 50,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: TaskPriority.values.map((priority) => _buildPriorityChip(priority)).toList(),
               ),
             ),
-          ),
-
-          // Bouton d'enregistrement
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveTask,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    isEditing
-                        ? 'Enregistrer les modifications'
-                        : 'Créer la tâche',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    final months = [
-      'jan',
-      'fév',
-      'mar',
-      'avr',
-      'mai',
-      'juin',
-      'juil',
-      'aoû',
-      'sep',
-      'oct',
-      'nov',
-      'déc',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey[600],
+        letterSpacing: 0.5,
+      ),
+    );
   }
 
-  Map<String, Color> _getPriorityColors(TaskPriority priority) {
+  InputDecoration _buildInputDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: Colors.grey[400]),
+      filled: true,
+      fillColor: const Color(0xFFF2F2F7),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF007AFF), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _buildPriorityChip(TaskPriority priority) {
+    final isSelected = _selectedPriority == priority;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPriority = priority),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Taller pills
+        decoration: BoxDecoration(
+          color: isSelected ? _getPriorityColor(priority) : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: isSelected ? _getPriorityColor(priority) : Colors.grey[300]!,
+            width: 1.5,
+          ),
+          boxShadow: isSelected 
+             ? [BoxShadow(color: _getPriorityColor(priority).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4))] 
+             : null,
+        ),
+        child: Text(
+          priority.label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getPriorityColor(TaskPriority priority) {
     switch (priority) {
-      case TaskPriority.low:
-        return {
-          'bg': Colors.blue[50]!,
-          'border': Colors.blue[200]!,
-          'text': Colors.blue[700]!,
-        };
-      case TaskPriority.medium:
-        return {
-          'bg': Colors.yellow[50]!,
-          'border': Colors.yellow[200]!,
-          'text': Colors.yellow[800]!,
-        };
-      case TaskPriority.high:
-        return {
-          'bg': Colors.orange[50]!,
-          'border': Colors.orange[200]!,
-          'text': Colors.orange[700]!,
-        };
-      case TaskPriority.urgent:
-        return {
-          'bg': Colors.red[50]!,
-          'border': Colors.red[200]!,
-          'text': Colors.red[700]!,
-        };
+      case TaskPriority.low: return const Color(0xFF34C759);
+      case TaskPriority.medium: return const Color(0xFFFF9500);
+      case TaskPriority.high: return const Color(0xFFFF3B30);
+      case TaskPriority.urgent: return const Color(0xFF5856D6);
     }
+  }
+
+  String _formatDateAndTime(DateTime date, TimeOfDay? time) {
+    final dateStr = DateFormat('EEE d MMM y', 'fr_FR').format(date);
+    if (time != null) {
+      final hour = time.hour.toString().padLeft(2, '0');
+      final minute = time.minute.toString().padLeft(2, '0');
+      return '$dateStr à $hour:$minute';
+    }
+    return dateStr;
   }
 }

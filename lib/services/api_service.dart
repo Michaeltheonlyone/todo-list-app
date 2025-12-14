@@ -3,20 +3,29 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/task.dart';
 import '../models/session.dart';
+import '../models/app_notification.dart';
 
 class ApiService {
   // IMPORTANT: Change localhost par l'IP de ton backend pour mobile
   // Pour Android emulator: 10.0.2.2
   // Pour iOS simulator: localhost
-  // Pour vrai device: IP de ton ordinateur (ex: 192.168.1.100)
-  static const String baseUrl =
-      'http://localhost/backend/endpoints'; // À ajuster selon ton setup
+  // Pour vrai device: IP de ton ordinateur (ex: 192.168.187.55)
+  //static const String baseUrl =
+      //'http://localhost/backend/endpoints'; // À ajuster selon ton setup
 
-  // 1. Get all tasks
-  static Future<List<Task>> getTasks() async {
+  // CONFIGURATION POUR XAMPP (TEAM)
+  // Si vous utilisez XAMPP, décommentez la ligne ci-dessous et commentez celle du 'php -S'
+  // Assurez-vous que le dossier 'todo-list-app' est dans 'htdocs'
+  // static const String baseUrl = 'http://localhost/todo-list-app/backend/endpoints';
+
+  // CONFIGURATION ACTUELLE (PHP Built-in Server)
+  static const String baseUrl = 'http://localhost:8002/endpoints';
+
+  // 1. Get all tasks (User specific)
+  static Future<List<Task>> getTasks(int userId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/tasks.php'),
+        Uri.parse('$baseUrl/tasks.php?user_id=$userId'),
         headers: {'Accept': 'application/json'},
       );
 
@@ -32,16 +41,19 @@ class ApiService {
     }
   }
 
-  // 2. Create new task
-  static Future<Task> createTask(Task task) async {
+  // 2. Create new task (User specific)
+  static Future<Task> createTask(Task task, int userId) async {
     try {
+      final taskMap = task.toMap();
+      taskMap['user_id'] = userId; // Add user_id to payload
+
       final response = await http.post(
         Uri.parse('$baseUrl/tasks.php'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: json.encode(task.toMap()),
+        body: json.encode(taskMap),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -157,6 +169,42 @@ class ApiService {
     } catch (e) {
       print('Error in updateSession: $e');
       throw Exception('Network error: $e');
+    }
+  }
+
+  // 8. Get Notifications
+  static Future<List<AppNotification>> getNotifications(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications.php?user_id=$userId'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data.map((json) => AppNotification.fromMap(json)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error loading notifications: $e');
+      return [];
+    }
+  }
+
+  // 9. Mark Notification as Read
+  static Future<void> markNotificationRead(int id) async {
+    try {
+      await http.put(
+        Uri.parse('$baseUrl/notifications.php'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({'id': id}),
+      );
+    } catch (e) {
+      print('Error marking notification read: $e');
     }
   }
 }

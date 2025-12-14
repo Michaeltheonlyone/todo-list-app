@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 
 class LogoScreen extends StatefulWidget {
   const LogoScreen({super.key});
@@ -11,8 +12,18 @@ class _LogoScreenState extends State<LogoScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacementNamed(context, '/splash');
+    Future.delayed(const Duration(seconds: 2), () async {
+      // Check auth here
+      final isLoggedIn = await AuthService.isLoggedIn();
+      if (!mounted) return;
+      
+      if (isLoggedIn) {
+        // If already logged in, show splash (loading) then tasks
+        Navigator.pushReplacementNamed(context, '/splash');
+      } else {
+        // If not, go to login
+        Navigator.pushReplacementNamed(context, '/login');
+      }
     });
   }
 
