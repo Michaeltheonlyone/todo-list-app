@@ -67,6 +67,35 @@ elseif ($action == 'login') {
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
     }
+} elseif ($action == 'update_profile') {
+    $userId = $input['user_id'] ?? '';
+    $username = $input['username'] ?? '';
+    $password = $input['password'] ?? '';
+
+    if (empty($userId) || empty($username)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing data']);
+        exit();
+    }
+
+    $sql = "UPDATE users SET username = ?";
+    $params = [$username];
+
+    if (!empty($password)) {
+        $sql .= ", password = ?";
+        $params[] = password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    $sql .= " WHERE id = ?";
+    $params[] = $userId;
+
+    $stmt = $pdo->prepare($sql);
+    if ($stmt->execute($params)) {
+        echo json_encode(['message' => 'Profile updated']);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Update failed']);
+    }
 } else {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid action']);
