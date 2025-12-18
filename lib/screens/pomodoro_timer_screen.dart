@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/task.dart';
 import '../models/session.dart';
 import '../services/session_service.dart';
@@ -75,7 +76,8 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
     _timer?.cancel();
     setState(() {
       _isRunning = false;
-      _remainingSeconds = _currentType.defaultDuration * 60;
+      // On garde la durée actuelle si on reset, ou on remet à défaut si on change de type
+      _remainingSeconds = _currentType.defaultDuration * 60; 
     });
   }
 
@@ -274,13 +276,16 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(
-                      _formatTime(_remainingSeconds),
-                      style: const TextStyle(
-                        fontSize: 64,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                    child: GestureDetector(
+                      onTap: _showDurationPicker,
+                      child: Text(
+                        _formatTime(_remainingSeconds),
+                        style: const TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
                       ),
                     ),
                   ),
@@ -384,6 +389,53 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showDurationPicker() {
+    if (_isRunning) return; // Ne pas changer pendant que ça tourne
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext builder) {
+        return Container(
+          height: MediaQuery.of(context).copyWith().size.height / 3,
+          color: Colors.white,
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    child: const Text('Annuler'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  CupertinoButton(
+                    child: const Text('Valider'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: CupertinoTimerPicker(
+                  mode: CupertinoTimerPickerMode.hm,
+                  initialTimerDuration: Duration(seconds: _remainingSeconds),
+                  onTimerDurationChanged: (Duration newDuration) {
+                    setState(() {
+                      // On s'assure qu'il y a au moins 1 minute
+                      if (newDuration.inSeconds < 60) {
+                         _remainingSeconds = 60;
+                      } else {
+                         _remainingSeconds = newDuration.inSeconds;
+                      }
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

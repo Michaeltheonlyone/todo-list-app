@@ -39,12 +39,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      if (result['success']) {
+
+      if (result != null && result.containsKey('user_id')) {
         Navigator.pushReplacementNamed(context, '/tasks');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['error'] ?? 'Erreur lors de la connexion'),
+            content: Text((result != null && result['error'] != null)
+                ? result['error']
+                : 'Erreur lors de la connexion'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),

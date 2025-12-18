@@ -20,7 +20,7 @@ class AuthService {
         }),
       );
 
-      return response.statusCode == 201;
+      return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
       print('Error register: $e');
       return false;
@@ -78,5 +78,11 @@ class AuthService {
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
     final userId = prefs.getInt('user_id');
     return isLoggedIn && userId != null;
+  }
+
+  // Obtenir le nom d'utilisateur
+  static Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('username');
   }
 }

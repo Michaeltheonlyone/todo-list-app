@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
-      if (result['success']) {
+      if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Compte créé avec succès !'),
@@ -55,8 +55,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['error'] ?? 'Erreur lors de l\'inscription'),
+          const SnackBar(
+            content: Text('Erreur lors de l\'inscription'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),

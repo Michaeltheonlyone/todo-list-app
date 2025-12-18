@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rappel',
+      title: 'TaskFlow',
       debugShowCheckedModeBanner: false,
 
       // Theme Configuration
@@ -239,7 +239,7 @@ class MyApp extends StatelessWidget {
         ),
 
         // Card Theme
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: Colors.white,
           elevation: 0,
           shadowColor: Colors.black.withOpacity(0.05),
@@ -287,7 +287,7 @@ class MyApp extends StatelessWidget {
         ),
 
         // Dialog Theme
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           backgroundColor: Colors.white,
           elevation: 8,
           shape: RoundedRectangleBorder(

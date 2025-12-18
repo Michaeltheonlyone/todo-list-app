@@ -19,7 +19,8 @@ class ApiService {
   // static const String baseUrl = 'http://localhost/todo-list-app/backend/endpoints';
 
   // CONFIGURATION ACTUELLE (PHP Built-in Server)
-  static const String baseUrl = 'http://localhost:8002/endpoints';
+  // CONFIGURATION ACTUELLE (PHP Built-in Server)
+  static const String baseUrl = 'http://localhost:8000/backend/endpoints';
 
   // 1. Get all tasks (User specific)
   static Future<List<Task>> getTasks(int userId) async {

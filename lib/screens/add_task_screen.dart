@@ -21,8 +21,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   TaskPriority _selectedPriority = TaskPriority.medium;
-  List<String> _tags = [];
-  final _tagController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -37,7 +35,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           ? TimeOfDay.fromDateTime(widget.task!.dueDate!)
           : null;
       _selectedPriority = widget.task!.priority;
-      _tags = widget.task!.tags ?? [];
     }
   }
 
@@ -45,7 +42,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _tagController.dispose();
     super.dispose();
   }
 
@@ -97,19 +93,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
-  void _addTag() {
-    if (_tagController.text.isNotEmpty) {
-      setState(() {
-        _tags.add(_tagController.text.trim());
-        _tagController.clear();
-      });
-    }
-  }
-
-  void _removeTag(String tag) {
-    setState(() => _tags.remove(tag));
-  }
-
   Future<void> _saveTask() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +128,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         dueDate: finalDateTime,
         priority: _selectedPriority,
         status: widget.task?.status ?? TaskStatus.pending,
-        tags: _tags.isNotEmpty ? _tags : null,
       );
 
       if (widget.task == null) {
@@ -417,90 +399,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
               const SizedBox(height: 16),
 
-              // Tags Section
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.label_outline, color: Color(0xFF007AFF)),
-                          SizedBox(width: 16),
-                          Text(
-                            'Tags',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
 
-                      const SizedBox(height: 12),
-
-                      // Tag Input
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _tagController,
-                              decoration: InputDecoration(
-                                hintText: 'Ajouter un tag',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.grey[300]!),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                isDense: true,
-                              ),
-                              onSubmitted: (_) => _addTag(),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: _addTag,
-                            icon: const Icon(Icons.add_circle, color: Color(0xFF007AFF)),
-                            iconSize: 32,
-                          ),
-                        ],
-                      ),
-
-                      if (_tags.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _tags.map((tag) {
-                            return Chip(
-                              label: Text(tag),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              onDeleted: () => _removeTag(tag),
-                              backgroundColor: const Color(0xFF007AFF).withOpacity(0.1),
-                              labelStyle: const TextStyle(
-                                color: Color(0xFF007AFF),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
 
               const SizedBox(height: 80),
             ],

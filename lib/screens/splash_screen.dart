@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               FadeTransition(
                 opacity: _textAnimation,
                 child: const Text(
-                  'Rappel',
+                  'TaskFlow',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,

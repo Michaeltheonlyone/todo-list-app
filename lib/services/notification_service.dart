@@ -6,7 +6,7 @@ import '../models/app_notification.dart';
 import 'auth_service.dart';
 
 class NotificationService {
-  static const String baseUrl = 'http://localhost/todo_app/backend/endpoints';
+  static const String baseUrl = 'http://localhost:8000/backend/endpoints';
   // Pour Android: 'http://10.0.2.2/todo_app/backend/endpoints'
   // Pour iOS: 'http://localhost/todo_app/backend/endpoints'
 

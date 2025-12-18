@@ -59,7 +59,7 @@ class Task {
       'status': status.index,
       'createdAt': createdAt.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
-      'tags': tags?.join(','),
+      'tags': tags,
     };
   }
 

@@ -4,11 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/task.dart';
 import 'priority_badge.dart';
 
-// lib/widgets/task_card.dart
 
-import 'package:flutter/material.dart';
-import '../models/task.dart';
-import 'priority_badge.dart';
 
 class TaskCard extends StatefulWidget {
   final Task task;

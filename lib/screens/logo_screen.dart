@@ -122,7 +122,7 @@ class _LogoScreenState extends State<LogoScreen> with SingleTickerProviderStateM
 
                       // App Name
                       const Text(
-                        'Rappel',
+                        'TaskFlow',
                         style: TextStyle(
                           fontSize: 42,
                           fontWeight: FontWeight.bold,

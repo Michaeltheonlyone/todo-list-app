@@ -40,7 +40,7 @@ if ($action == 'register') {
         $notifStmt->execute([
             $newUserId,
             "Bienvenue !",
-            "Bienvenue sur Rappel, $username ! Organisez vos tâches dès maintenant."
+            "Bienvenue sur TaskFlow, $username ! Organisez vos tâches dès maintenant."
         ]);
 
         http_response_code(201);

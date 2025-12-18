@@ -3,10 +3,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/task.dart';
-import '../screens/auth_service.dart';
+import 'auth_service.dart';
 
 class TaskService {
-  static const String baseUrl = 'http://localhost/todo_app/backend/endpoints';
+  static const String baseUrl = 'http://localhost:8000/backend/endpoints';
   // Pour un appareil Android: 'http://10.0.2.2/todo_app/backend/endpoints'
   // Pour un appareil iOS: 'http://localhost/todo_app/backend/endpoints'
 

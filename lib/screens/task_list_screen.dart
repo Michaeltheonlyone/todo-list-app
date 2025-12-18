@@ -20,11 +20,12 @@ class TaskListScreen extends StatefulWidget {
 
 class _TaskListScreenState extends State<TaskListScreen> {
   List<Task> _tasks = [];
-  List<Task> _filteredTasks = [];
+
   bool _isLoading = true;
   String _username = '';
   int _unreadNotifications = 0;
-  String? _selectedCategory;
+  String _selectedCategory = 'Aujourd\'hui';
+
 
   @override
   void initState() {
@@ -46,7 +47,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
         _unreadNotifications = unreadCount;
         _isLoading = false;
       });
-      _filterTasks();
+
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -61,45 +62,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
   }
 
-  void _filterTasks() {
-    List<Task> filtered = _tasks;
-
-    if (_selectedCategory != null) {
-      switch (_selectedCategory) {
-        case 'today':
-          filtered = filtered.where((t) => t.isDueToday).toList();
-          break;
-        case 'scheduled':
-          filtered = filtered.where((t) => t.dueDate != null).toList();
-          break;
-        case 'important':
-          filtered = filtered.where((t) =>
-          t.priority == TaskPriority.high || t.priority == TaskPriority.urgent
-          ).toList();
-          break;
-        case 'overdue':
-          filtered = filtered.where((t) => t.isOverdue).toList();
-          break;
-        case 'completed':
-          filtered = filtered.where((t) => t.status == TaskStatus.completed).toList();
-          break;
-        case 'no_alert':
-          filtered = filtered.where((t) => t.dueDate == null).toList();
-          break;
-      }
-    }
-
-    filtered.sort((a, b) {
-      if (a.status == TaskStatus.completed && b.status != TaskStatus.completed) return 1;
-      if (a.status != TaskStatus.completed && b.status == TaskStatus.completed) return -1;
-      if (a.dueDate == null && b.dueDate == null) return 0;
-      if (a.dueDate == null) return 1;
-      if (b.dueDate == null) return -1;
-      return a.dueDate!.compareTo(b.dueDate!);
-    });
-
-    setState(() => _filteredTasks = filtered);
-  }
+  // Plus besoin de _filterTasks car on filtre directement dans le build
+  List<Task> get _todayTasks => _tasks.where((t) => t.isDueToday).toList();
+  List<Task> get _allTasks => _tasks; // Toutes les tâches pour "Mes Tâches"
 
   Future<void> _addTask() async {
     final result = await Navigator.push(
@@ -143,26 +108,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
   }
 
-  int _getCategoryCount(String category) {
-    switch (category) {
-      case 'today':
-        return _tasks.where((t) => t.isDueToday).length;
-      case 'scheduled':
-        return _tasks.where((t) => t.dueDate != null).length;
-      case 'important':
-        return _tasks.where((t) =>
-        t.priority == TaskPriority.high || t.priority == TaskPriority.urgent
-        ).length;
-      case 'overdue':
-        return _tasks.where((t) => t.isOverdue).length;
-      case 'completed':
-        return _tasks.where((t) => t.status == TaskStatus.completed).length;
-      case 'no_alert':
-        return _tasks.where((t) => t.dueDate == null).length;
-      default:
-        return 0;
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +127,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Rappel',
+                        'Aujourd\'hui',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -278,135 +224,60 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   ),
 
                   const SizedBox(height: 16),
-
-                  // Category Tiles (Samsung Style)
-                  SizedBox(
-                    height: 90,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _CategoryTile(
-                          icon: Icons.today_outlined,
-                          label: 'Aujourd\'hui',
-                          count: _getCategoryCount('today'),
-                          isSelected: _selectedCategory == 'today',
-                          color: const Color(0xFF007AFF),
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = _selectedCategory == 'today' ? null : 'today';
-                            });
-                            _filterTasks();
-                          },
-                        ),
-                        _CategoryTile(
-                          icon: Icons.calendar_month_outlined,
-                          label: 'Planifiées',
-                          count: _getCategoryCount('scheduled'),
-                          isSelected: _selectedCategory == 'scheduled',
-                          color: Colors.orange,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = _selectedCategory == 'scheduled' ? null : 'scheduled';
-                            });
-                            _filterTasks();
-                          },
-                        ),
-                        _CategoryTile(
-                          icon: Icons.star_outline,
-                          label: 'Important',
-                          count: _getCategoryCount('important'),
-                          isSelected: _selectedCategory == 'important',
-                          color: Colors.red,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = _selectedCategory == 'important' ? null : 'important';
-                            });
-                            _filterTasks();
-                          },
-                        ),
-                        _CategoryTile(
-                          icon: Icons.notifications_off_outlined,
-                          label: 'Sans alerte',
-                          count: _getCategoryCount('no_alert'),
-                          isSelected: _selectedCategory == 'no_alert',
-                          color: Colors.grey,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = _selectedCategory == 'no_alert' ? null : 'no_alert';
-                            });
-                            _filterTasks();
-                          },
-                        ),
-                        _CategoryTile(
-                          icon: Icons.check_circle_outline,
-                          label: 'Terminées',
-                          count: _getCategoryCount('completed'),
-                          isSelected: _selectedCategory == 'completed',
-                          color: Colors.green,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = _selectedCategory == 'completed' ? null : 'completed';
-                            });
-                            _filterTasks();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
 
-            // Task List
+            // Content
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : _filteredTasks.isEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.task_alt,
-                      size: 80,
-                      color: Colors.grey[300],
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category Carousel (Tabs)
+                        Container(
+                          height: 50,
+                          margin: const EdgeInsets.symmetric(vertical: 16),
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            children: [
+                              _buildCategoryChip('Aujourd\'hui'),
+                              const SizedBox(width: 12),
+                              _buildCategoryChip('Mes Tâches'),
+                            ],
+                          ),
+                        ),
+
+                        // Task List
+                        Expanded(
+                          child: _selectedCategory == 'Aujourd\'hui' && _todayTasks.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'Rien de prévu aujourd\'hui',
+                                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: _selectedCategory == 'Aujourd\'hui'
+                                      ? _todayTasks.length
+                                      : _allTasks.length,
+                                  itemBuilder: (context, index) {
+                                    final task = _selectedCategory == 'Aujourd\'hui'
+                                        ? _todayTasks[index]
+                                        : _allTasks[index];
+                                    return _TaskItem(
+                                      task: task,
+                                      onTap: () => _openTaskDetail(task),
+                                      onToggle: () => _toggleTaskStatus(task),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Aucune tâche',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Appuyez sur + pour créer',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : RefreshIndicator(
-                onRefresh: _loadData,
-                color: const Color(0xFF007AFF),
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  itemCount: _filteredTasks.length,
-                  itemBuilder: (context, index) {
-                    final task = _filteredTasks[index];
-                    return _TaskItem(
-                      task: task,
-                      onTap: () => _openTaskDetail(task),
-                      onToggle: () => _toggleTaskStatus(task),
-                    );
-                  },
-                ),
-              ),
             ),
           ],
         ),
@@ -433,7 +304,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                         Icon(Icons.add, color: Colors.grey[600], size: 22),
                         const SizedBox(width: 12),
                         Text(
-                          'Ajouter un rappel',
+                          'Ajouter une tâche',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[700],
@@ -442,24 +313,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
                       ],
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.mic, color: Colors.white),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Commande vocale à venir'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
                 ),
               ),
             ],
@@ -497,78 +350,51 @@ class _TaskListScreenState extends State<TaskListScreen> {
       }
     }
   }
-}
 
-// Category Tile Widget (Samsung Style)
-class _CategoryTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-  final bool isSelected;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _CategoryTile({
-    required this.icon,
-    required this.label,
-    required this.count,
-    required this.isSelected,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 100,
-          decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.15) : Colors.grey[100],
-            borderRadius: BorderRadius.circular(16),
-            border: isSelected
-                ? Border.all(color: color, width: 2)
-                : null,
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? color : Colors.grey[600],
-                size: 24,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? color : Colors.grey[700],
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? color : Colors.grey[800],
-                ),
-              ),
-            ],
+  Widget _buildCategoryChip(String category) {
+    bool isSelected = _selectedCategory == category;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = category;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF007AFF) : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF007AFF).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+        ),
+        child: Text(
+          category,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
           ),
         ),
       ),
     );
   }
 }
+
+
 
 // Task Item Widget (Samsung Style - Simple)
 class _TaskItem extends StatelessWidget {
@@ -675,6 +501,85 @@ class _TaskItem extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+}
+
+// Widget Carte pour le Carousel "Aujourd'hui"
+class _TaskCard extends StatelessWidget {
+  final Task task;
+  final VoidCallback onTap;
+
+  const _TaskCard({required this.task, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (task.priority == TaskPriority.high || task.priority == TaskPriority.urgent)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text('Important', style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                const SizedBox(height: 8),
+                Text(
+                  task.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  task.dueDate != null
+                      ? DateFormat('HH:mm').format(task.dueDate!)
+                      : '--:--',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
